@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Margin — Semester Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --paper:#EEF1F6;--surface:#FFFFFF;--ink:#1B2A4A;--ink-soft:#5B6B8C;--line:#DCE2EE;
+  --safe:#2F7565;--safe-bg:#E4F1ED;--watch:#B5750F;--watch-bg:#FAEFDD;--danger:#AD3D3D;--danger-bg:#FBEAEA;
+  --serif:'Lora',Georgia,serif;--sans:'IBM Plex Sans',system-ui,sans-serif;--mono:'IBM Plex Mono',monospace;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#141926;--surface:#1D2436;--ink:#EDEFF5;--ink-soft:#9AA6C4;--line:#303952;--safe:#6FBBA3;--safe-bg:#1D3630;--watch:#E0A94B;--watch-bg:#3A2E17;--danger:#E1817F;--danger-bg:#3B2225;}}
+:root[data-theme="dark"]{--paper:#141926;--surface:#1D2436;--ink:#EDEFF5;--ink-soft:#9AA6C4;--line:#303952;--safe:#6FBBA3;--safe-bg:#1D3630;--watch:#E0A94B;--watch-bg:#3A2E17;--danger:#E1817F;--danger-bg:#3B2225;}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.5;min-height:100%}
+.wrap{max-width:820px;margin:0 auto;padding:0 18px 60px}
+
+/* Hero */
+.hero{background:var(--ink);color:var(--paper);padding:56px 18px 64px;margin-bottom:34px}
+.hero-inner{max-width:820px;margin:0 auto}
+.hero .kicker{font-family:var(--mono);font-size:0.78rem;letter-spacing:0.02em;color:#AEB9D6;margin-bottom:14px}
+.hero h1{font-family:var(--serif);font-weight:700;font-size:clamp(2.1rem,5.5vw,3.1rem);line-height:1.08;margin:0 0 16px;letter-spacing:-0.01em;max-width:16ch}
+.hero p{margin:0 0 26px;color:#C7D0E6;max-width:52ch;font-size:1.02rem}
+.hero-stats{display:flex;gap:28px;flex-wrap:wrap;border-top:1px solid #384566;padding-top:20px}
+.hero-stats .h-stat .h-num{font-family:var(--serif);font-size:1.5rem;font-weight:700;color:#fff}
+.hero-stats .h-stat .h-lbl{font-size:0.76rem;color:#9AA6C4;max-width:20ch}
+:root[data-theme="dark"] .hero, .hero{background:#111A30}
+@media (prefers-color-scheme:dark){ .hero{background:#0B1120} }
+
+.section-lbl{font-family:var(--mono);font-size:0.74rem;color:var(--ink-soft);letter-spacing:0.02em;margin:0 0 10px}
+
+.semband{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:18px}
+.semband .row{display:flex;justify-content:space-between;font-size:0.82rem;color:var(--ink-soft);margin-bottom:8px}
+.semband .row b{color:var(--ink);font-family:var(--mono);font-weight:500}
+.sembar{height:8px;border-radius:5px;background:var(--line);overflow:hidden}
+.sembar .fill{height:100%;background:var(--ink);border-radius:5px}
+
+.selectwrap{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:20px}
+.selectwrap label{display:block;font-size:0.8rem;color:var(--ink-soft);margin-bottom:6px}
+.selectwrap select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-family:var(--sans);font-size:0.95rem;background:var(--paper);color:var(--ink)}
+.note{font-size:0.76rem;color:var(--ink-soft);margin-top:8px}
+
+.overview{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:22px}
+.overview .stat{background:var(--surface);padding:14px 16px}
+.overview .stat .num{font-family:var(--serif);font-size:1.6rem;font-weight:700}
+.overview .stat .label{color:var(--ink-soft);font-size:0.78rem;margin-top:2px}
+
+.charts{display:grid;grid-template-columns:1.4fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:22px}
+.charts .cpanel{background:var(--surface);padding:16px 18px}
+.charts .cpanel h4{font-family:var(--serif);font-size:0.94rem;margin:0 0 10px;font-weight:600}
+.charts canvas{max-width:100%}
+.chart-bar-wrap{height:220px}
+.chart-donut-wrap{height:220px;display:flex;align-items:center;justify-content:center}
+.donut-legend{display:flex;flex-direction:column;gap:6px;margin-top:10px;font-size:0.78rem}
+.donut-legend span.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px}
+@media (max-width:640px){.charts{grid-template-columns:1fr}}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card-head h3{font-family:var(--serif);font-size:1.08rem;margin:0;font-weight:600}
+.freq{font-family:var(--mono);font-size:0.72rem;color:var(--ink-soft);background:var(--paper);padding:2px 8px;border-radius:12px}
+.badge{font-size:0.7rem;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.badge.safe{background:var(--safe-bg);color:var(--safe)}
+.badge.watch{background:var(--watch-bg);color:var(--watch)}
+.badge.danger{background:var(--danger-bg);color:var(--danger)}
+
+.gauge{position:relative;height:9px;border-radius:6px;background:var(--line);margin:12px 0 6px}
+.gauge .fill{position:absolute;top:0;left:0;height:100%;border-radius:6px}
+.gauge .fill.safe{background:var(--safe)}.gauge .fill.watch{background:var(--watch)}.gauge .fill.danger{background:var(--danger)}
+.gauge .tick{position:absolute;top:-3px;width:2px;height:15px;background:var(--ink-soft);opacity:.5}
+.gauge .tl{position:absolute;top:13px;font-size:0.64rem;color:var(--ink-soft);transform:translateX(-50%)}
+
+.inputs{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 4px}
+.inputs .f{flex:1 1 130px}
+.inputs label{display:block;font-size:0.72rem;color:var(--ink-soft);margin-bottom:3px}
+.inputs input{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:7px;font-family:var(--mono);font-size:0.86rem;background:var(--paper);color:var(--ink)}
+
+.verdict{margin-top:10px;padding:9px 11px;border-radius:9px;font-size:0.84rem}
+.verdict.safe{background:var(--safe-bg);color:var(--safe)}
+.verdict.watch{background:var(--watch-bg);color:var(--watch)}
+.verdict.danger{background:var(--danger-bg);color:var(--danger)}
+.verdict b{font-family:var(--mono)}
+.verdict + .verdict{margin-top:6px}
+
+.empty{text-align:center;padding:40px 20px;color:var(--ink-soft);border:1px dashed var(--line);border-radius:14px;font-size:0.92rem}
+footer{text-align:center;color:var(--ink-soft);font-size:0.76rem;margin-top:26px}
+
+.chat-fab{position:fixed;bottom:22px;right:22px;width:56px;height:56px;border-radius:50%;background:var(--ink);color:#fff;border:none;cursor:pointer;font-size:1.35rem;box-shadow:0 6px 18px rgba(0,0,0,.28);z-index:60}
+.chat-panel{position:fixed;bottom:88px;right:22px;width:360px;max-width:92vw;height:480px;max-height:72vh;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 34px rgba(0,0,0,.3);display:none;flex-direction:column;overflow:hidden;z-index:60}
+.chat-panel.open{display:flex}
+.chat-head{padding:12px 14px;border-bottom:1px solid var(--line);font-family:var(--serif);font-weight:600;font-size:0.98rem;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.chat-head button{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:1.1rem;line-height:1}
+.chat-body{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:9px;font-size:0.85rem}
+.chat-msg{max-width:86%;padding:8px 11px;border-radius:12px;line-height:1.42;white-space:pre-wrap}
+.chat-msg.user{align-self:flex-end;background:var(--ink);color:#fff;border-bottom-right-radius:3px}
+.chat-msg.bot{align-self:flex-start;background:var(--paper);border:1px solid var(--line);border-bottom-left-radius:3px}
+.chat-hint{font-size:0.72rem;color:var(--ink-soft);padding:0 14px 8px;flex-shrink:0}
+.chat-foot{padding:10px;border-top:1px solid var(--line);display:flex;gap:8px;flex-shrink:0}
+.chat-foot input{flex:1;min-width:0;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:0.85rem}
+.chat-foot button{background:var(--ink);color:#fff;border:none;border-radius:8px;padding:0 14px;cursor:pointer;font-size:0.85rem;flex-shrink:0}
+.chat-foot button:disabled{opacity:0.5;cursor:default}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="hero-inner">
+    <div class="kicker">SRM TIRUCHIRAPPALLI · ODD SEMESTER 2026-27</div>
+    <h1>Know your margin before your portal does.</h1>
+    <p>Portals show how many classes you've missed — after it's too late to fix. Margin reads your actual section timetable and tells you, subject by subject, exactly how much room you have left before detention. Plan around On-Duty or medical leave instantly, or just ask the advisor.</p>
+    <div class="hero-stats">
+      <div class="h-stat"><div class="h-num">75%</div><div class="h-lbl">mandatory floor to avoid detention</div></div>
+      <div class="h-stat"><div class="h-num">90%</div><div class="h-lbl">safe zone with room to spare</div></div>
+      <div class="h-stat"><div class="h-num">13</div><div class="h-lbl">sections loaded from real timetables</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="section-lbl">YOUR PLANNER</div>
+  <div class="semband" id="semband"></div>
+
+  <div class="selectwrap">
+    <label for="sectionSel">Your class section</label>
+    <select id="sectionSel"></select>
+    <div class="note" id="sectionNote"></div>
+  </div>
+
+  <div class="overview" id="overview" style="display:none"></div>
+
+  <div class="charts" id="charts" style="display:none">
+    <div class="cpanel">
+      <h4>Attendance by subject</h4>
+      <div class="chart-bar-wrap"><canvas id="barChart"></canvas></div>
+    </div>
+    <div class="cpanel">
+      <h4>Overall health</h4>
+      <div class="chart-donut-wrap"><canvas id="donutChart"></canvas></div>
+      <div class="donut-legend" id="donutLegend"></div>
+    </div>
+  </div>
+
+  <div id="list"></div>
+
+  <footer>Weekly class counts are derived from each course's L‑T‑P credit structure in the official timetable, spread evenly across teaching days — actual holidays or rescheduled classes aren't factored in, so treat these as close estimates and correct "held so far" against your portal. OD and medical-leave days you enter recalculate every projection instantly.</footer>
+</div>
+
+<button class="chat-fab" id="chatFab" title="Attendance advisor">💬</button>
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-head"><span>Attendance advisor</span><button id="chatClose">✕</button></div>
+  <div class="chat-body" id="chatBody"></div>
+  <div class="chat-hint">Try: "If I take 3 sick days starting tomorrow, will my Chemistry drop below 75%?"</div>
+  <div class="chat-foot">
+    <input id="chatInput" placeholder="Ask about your attendance…">
+    <button id="chatSend">Send</button>
+  </div>
+</div>
+
+<script>
+const SEM_START = new Date(2026,7,29);   // 29 Aug 2026
+const SEM_END   = new Date(2026,10,29);  // 29 Nov 2026
+
+const SECTIONS = {
+  i_ece_a:{label:"I Year — ECE A", note:"Source table dated 2024-25 odd semester; treated here as the current-year template.",
+    subs:[["German",3],["Philosophy of Engineering",3],["Advanced Calculus & Complex Analysis",4],["Chemistry",6],
+      ["Electronic System & PCB Design",2],["Programming for Problem Solving",5],["Basic Civil & Mechanical Workshop",4],
+      ["General Aptitude",2],["NSS",2],["Biology",2]]},
+  i_ece_b_eee:{label:"I Year — ECE B / EEE", note:"Source table dated 2024-25 odd semester; treated here as the current-year template.",
+    subs:[["German",3],["Philosophy of Engineering",3],["Advanced Calculus & Complex Analysis",4],["Chemistry",6],
+      ["Electronic System & PCB Design / Electrical Circuits",2],["Programming for Problem Solving",5],
+      ["Basic Civil & Mechanical Workshop",4],["General Aptitude",2],["NSS",2],["Biology",2]]},
+  i_ece_ds:{label:"I Year — ECE-DS", note:"Source table dated 2024-25 even semester; treated here as the current-year template.",
+    subs:[["German",3],["Philosophy of Engineering",3],["Advanced Calculus & Complex Analysis",4],["Chemistry",6],
+      ["Electronic System & PCB Design",2],["Programming for Problem Solving",5],["Basic Civil & Mechanical Workshop",4],
+      ["General Aptitude",2],["NSS",2],["Biology",2]]},
+  i_biotech_b:{label:"I Year — Biotech-B / BME", note:"Source table dated 2024-25 even semester; treated here as the current-year template.",
+    subs:[["Japanese",3],["Philosophy of Engineering",3],["Advanced Calculus & Complex Analysis",4],["Chemistry",6],
+      ["Cell Biology",2],["Programming for Problem Solving",5],["Basic Civil & Mechanical Workshop",4],
+      ["General Aptitude",2],["Physical & Mental Health using Yoga",2],["Biochemistry",3],["Biology: Human Physiology & Anatomy",2]]},
+  ii_bme:{label:"II Year — BME",
+    subs:[["Transforms & Boundary Value Problems",4],["Biomedical Signals & Systems",3],["Electric & Electronic Circuits",5],
+      ["Digital Logic for Medical Systems",4],["Medical Physics",3],["Professional Ethics",1],["Universal Human Values-II",3],
+      ["Verbal Reasoning",2],["Social Engineering",2]]},
+  ii_ece_ds_a:{label:"II Year — ECE-DS A",
+    subs:[["Transforms & Boundary Value Problems",4],["Solid State Devices",3],["Computer Organization & Architecture",4],
+      ["Digital Logic Design",3],["Electromagnetic Theory & Interference",3],["Professional Ethics",1],
+      ["Universal Human Values-II",3],["Verbal Reasoning",2],["Social Engineering",2],["Devices & Digital IC Lab",4]]},
+  ii_ece_ds_b:{label:"II Year — ECE-DS B",
+    subs:[["Transforms & Boundary Value Problems",4],["Solid State Devices",3],["Computer Organization & Architecture",4],
+      ["Digital Logic Design",3],["Electromagnetic Theory & Interference",3],["Professional Ethics",1],
+      ["Universal Human Values-II",3],["Verbal Reasoning",2],["Social Engineering",2],["Devices & Digital IC Lab",4]]},
+  iii_bme:{label:"III Year — BME",
+    subs:[["Probability & Statistics",4],["Microcontrollers & Applications in Medicine",5],["Biomedical Signal Processing",5],
+      ["Biometrics",3],["Modern Wireless Communication System",3],["Principles of Medical Imaging",3],
+      ["Analytical & Logical Thinking Skills",2],["Indian Art Form",1],["Community Connect",2]]},
+  iii_ece_a:{label:"III Year — ECE A",
+    subs:[["Discrete Mathematics",4],["Microprocessor, Microcontroller & Interfacing",4],["VLSI Design & Technology",3],
+      ["System & Network on Chip",3],["Machine Learning for All",3],["Community Connect",2],
+      ["Analytical & Logical Thinking Skills",2],["Indian Art Form",1],["VLSI / Microprocessor Lab",4]]},
+  iii_ece_b:{label:"III Year — ECE B",
+    subs:[["Discrete Mathematics",4],["Microprocessor, Microcontroller & Interfacing",4],["VLSI Design & Technology",3],
+      ["System & Network on Chip",3],["Machine Learning for All",3],["Community Connect",2],
+      ["Analytical & Logical Thinking Skills",2],["Indian Art Form",1],["VLSI / Microprocessor Lab",4]]},
+  iii_ece_ds:{label:"III Year — ECE-DS",
+    subs:[["Discrete Mathematics",4],["Microprocessor, Microcontroller & Interfacing",4],["VLSI Design & Technology",3],
+      ["Machine Learning for All",3],["Database Design & Management",3],["Community Connect",2],
+      ["Analytical & Logical Thinking Skills",2],["Indian Art Form",1],["VLSI / Microprocessor Lab",4]]},
+  iv_ece_a:{label:"IV Year — ECE A",
+    subs:[["Behavioural Psychology",3],["Wireless Communication & Antenna Systems",3],
+      ["Computer Communication & Network Security",5],["Semiconductor Memory Design",3],
+      ["Scripting Language for EDA",3],["Machine Learning for All",3]]},
+  iv_ece_b:{label:"IV Year — ECE B",
+    subs:[["Behavioural Psychology",3],["Wireless Communication & Antenna Systems",3],
+      ["Computer Communication & Network Security",5],["Semiconductor Memory Design",3],
+      ["Scripting Language for EDA",3],["Machine Learning for All",3]]}
+};
+
+function countWeekdays(start,end){
+  if (start>end) return 0;
+  let c=0, d=new Date(start);
+  while(d<=end){ const wd=d.getDay(); if(wd>=1&&wd<=5) c++; d.setDate(d.getDate()+1); }
+  return c;
+}
+let today = new Date();
+if (today < SEM_START) today = new Date(SEM_START);
+if (today > SEM_END) today = new Date(SEM_END);
+
+const totalDays = countWeekdays(SEM_START, SEM_END);
+const elapsedDays = countWeekdays(SEM_START, today);
+const remainingDays = countWeekdays(new Date(today.getTime()+86400000), SEM_END);
+
+function fmt(d){ return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
+
+document.getElementById('semband').innerHTML = `
+  <div class="row"><span>${fmt(SEM_START)} — semester start</span><span><b>${elapsedDays}</b> teaching days elapsed</span></div>
+  <div class="sembar"><div class="fill" style="width:${Math.min(100, elapsedDays/totalDays*100)}%"></div></div>
+  <div class="row" style="margin-top:8px;margin-bottom:0"><span>Today, ${fmt(today)}</span><span><b>${remainingDays}</b> teaching days remain to ${fmt(SEM_END)}</span></div>
+`;
+
+const sel = document.getElementById('sectionSel');
+sel.innerHTML = '<option value="">Choose a section…</option>' +
+  Object.entries(SECTIONS).map(([k,v]) => `<option value="${k}">${v.label}</option>`).join('');
+
+const STORE_KEY = 'margin_dash_v1';
+let store = {};
+try { store = JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); } catch(e) { store = {}; }
+function saveStore(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }catch(e){} }
+
+function status(pct){ return pct>=90?'safe':pct>=75?'watch':'danger'; }
+function statusLabel(s){ return s==='safe'?'Safe':s==='watch'?'Watch zone':'Detention risk'; }
+
+function plan(attended, held, remaining, T){
+  const finalDen = held + remaining;
+  const mustAttend = Math.max(0, Math.min(remaining, Math.ceil(T*finalDen - attended - 1e-9)));
+  const achievable = (attended + remaining) >= Math.ceil(T*finalDen - 1e-9);
+  const canSkip = Math.max(0, remaining - mustAttend);
+  const bestPct = finalDen>0 ? (attended+remaining)/finalDen*100 : 0;
+  return {mustAttend, canSkip, achievable, bestPct};
+}
+
+function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+function estHeld(p){ return totalDays>0 ? Math.round(p*elapsedDays/5) : 0; }
+function estTotal(p){ return totalDays>0 ? Math.round(p*totalDays/5) : 0; }
+
+function render(sectionKey){
+  const list = document.getElementById('list');
+  const overview = document.getElementById('overview');
+  const noteEl = document.getElementById('sectionNote');
+  if (!sectionKey) { list.innerHTML = '<div class="empty">Choose your section above to load your subjects and dates from the timetable.</div>'; overview.style.display='none'; document.getElementById('charts').style.display='none'; noteEl.textContent=''; return; }
+
+  const section = SECTIONS[sectionKey];
+  noteEl.textContent = section.note || '';
+  store[sectionKey] = store[sectionKey] || {};
+  const secStore = store[sectionKey];
+
+  let atRisk=0, watchN=0, totalAtt=0, totalHeld=0;
+  const rows = section.subs.map((s,i) => {
+    const [name, ppw] = s;
+    const heldEst = estHeld(ppw);
+    const totalEst = estTotal(ppw);
+    const remaining = Math.max(0, totalEst - heldEst);
+    const saved = secStore[i] || {};
+    const held = saved.held !== undefined ? saved.held : heldEst;
+    const attended = saved.attended !== undefined ? saved.attended : heldEst;
+    const od = saved.od || 0;
+    const ml = saved.ml || 0;
+    const pct = held>0 ? attended/held*100 : 100;
+    const st = status(pct);
+    if (st==='danger') atRisk++; else if (st==='watch') watchN++;
+    totalAtt += attended; totalHeld += held;
+    const freeRemaining = Math.max(0, remaining - od - ml);
+    const adjAttended = attended + od;
+    const adjHeld = held + od + ml;
+    return {name, ppw, heldEst, totalEst, remaining, held, attended, od, ml, freeRemaining, adjAttended, adjHeld, pct, st, idx:i};
+  });
+
+  overview.style.display='grid';
+  const overallPct = totalHeld>0 ? totalAtt/totalHeld*100 : 0;
+  overview.innerHTML = `
+    <div class="stat"><div class="num">${overallPct.toFixed(1)}%</div><div class="label">Overall attendance</div></div>
+    <div class="stat"><div class="num" style="color:${atRisk>0?'var(--danger)':'var(--ink)'}">${atRisk}</div><div class="label">Subject${atRisk!==1?'s':''} below 75%</div></div>
+    <div class="stat"><div class="num" style="color:${watchN>0?'var(--watch)':'var(--ink)'}">${watchN}</div><div class="label">In the watch zone</div></div>
+  `;
+
+  renderCharts(rows, atRisk, watchN, rows.length-atRisk-watchN);
+
+  list.innerHTML = rows.map(r => {
+    const p75 = plan(r.adjAttended, r.adjHeld, r.freeRemaining, 0.75);
+    const p90 = plan(r.adjAttended, r.adjHeld, r.freeRemaining, 0.90);
+    let v75, v90;
+    if (r.pct < 75) {
+      v75 = p75.achievable
+        ? `⚠ Attend <b>${p75.mustAttend}</b> of your next ${r.freeRemaining} classes to climb back to 75% by semester end.`
+        : `⚠ Even attending all ${r.freeRemaining} remaining classes tops out at <b>${p75.bestPct.toFixed(1)}%</b> — 75% is no longer reachable this semester.`;
+    } else {
+      v75 = `You can skip up to <b>${p75.canSkip}</b> of your remaining ${r.freeRemaining} classes and stay above 75%.`;
+    }
+    if (r.pct < 90) {
+      v90 = p90.achievable
+        ? `Attend <b>${p90.mustAttend}</b> of your next ${r.freeRemaining} to reach the safe 90% zone.`
+        : `90% isn't reachable this semester even with full attendance — best possible is <b>${p90.bestPct.toFixed(1)}%</b>.`;
+    } else {
+      v90 = `You're in the safe zone — up to <b>${p90.canSkip}</b> more skips still keep you above 90%.`;
+    }
+    const odMlNote = (r.od>0 || r.ml>0)
+      ? `<div class="verdict watch" style="background:var(--paper);color:var(--ink-soft)">Adjusted for <b>${r.od}</b> OD day${r.od!==1?'s':''} (counted present) and <b>${r.ml}</b> medical/leave day${r.ml!==1?'s':''} (counted absent) among your remaining classes.</div>`
+      : '';
+
+    return `
+    <div class="card">
+      <div class="card-head">
+        <h3>${escapeHtml(r.name)}</h3>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="freq">${r.ppw}/wk</span>
+          <span class="badge ${r.st}">${statusLabel(r.st)}</span>
+        </div>
+      </div>
+      <div class="gauge">
+        <div class="fill ${r.st}" style="width:${Math.min(r.pct,100)}%"></div>
+        <div class="tick" style="left:75%"></div><div class="tick" style="left:90%"></div>
+        <div class="tl" style="left:75%">75</div><div class="tl" style="left:90%">90</div>
+      </div>
+      <div class="inputs">
+        <div class="f"><label>Classes held so far (est. ${r.heldEst})</label>
+          <input type="number" min="0" value="${r.held}" onchange="updateField('${sectionKey}',${r.idx},'held',this.value)"></div>
+        <div class="f"><label>Classes you attended</label>
+          <input type="number" min="0" value="${r.attended}" onchange="updateField('${sectionKey}',${r.idx},'attended',this.value)"></div>
+        <div class="f"><label>Classes left this semester</label>
+          <input type="number" value="${r.remaining}" disabled></div>
+      </div>
+      <div class="inputs">
+        <div class="f"><label>On-duty (OD) days upcoming</label>
+          <input type="number" min="0" value="${r.od}" onchange="updateField('${sectionKey}',${r.idx},'od',this.value)"></div>
+        <div class="f"><label>Medical / leave days upcoming</label>
+          <input type="number" min="0" value="${r.ml}" onchange="updateField('${sectionKey}',${r.idx},'ml',this.value)"></div>
+      </div>
+      ${odMlNote}
+      <div class="verdict ${r.pct<75?'danger':'watch'}">${v75}</div>
+      <div class="verdict ${r.pct>=90?'safe':'watch'}">${v90}</div>
+    </div>`;
+  }).join('');
+}
+
+let barChartInst = null, donutChartInst = null;
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+function renderCharts(rows, atRisk, watchN, safeN){
+  const wrap = document.getElementById('charts');
+  if (!rows.length || typeof Chart === 'undefined') { wrap.style.display='none'; return; }
+  wrap.style.display='grid';
+
+  const safeC = cssVar('--safe') || '#2F7565', watchC = cssVar('--watch') || '#B5750F', dangerC = cssVar('--danger') || '#AD3D3D';
+  const inkC = cssVar('--ink') || '#1B2A4A', softC = cssVar('--ink-soft') || '#5B6B8C', lineC = cssVar('--line') || '#DCE2EE';
+  const colorOf = st => st==='safe'?safeC:st==='watch'?watchC:dangerC;
+
+  // Bar chart: current % per subject, color-coded, with 75/90 reference lines
+  const barCtx = document.getElementById('barChart').getContext('2d');
+  if (barChartInst) barChartInst.destroy();
+  barChartInst = new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels: rows.map(r => r.name.length>18 ? r.name.slice(0,17)+'…' : r.name),
+      datasets: [{
+        data: rows.map(r => Math.round(r.pct*10)/10),
+        backgroundColor: rows.map(r => colorOf(r.st)),
+        borderRadius: 5,
+        maxBarThickness: 26
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => c.parsed.x.toFixed(1)+'%' } },
+        annotation: undefined
+      },
+      scales: {
+        x: { min:0, max:100, ticks:{ color: softC, font:{ family:"'IBM Plex Mono', monospace", size:10 } }, grid:{ color: lineC } },
+        y: { ticks:{ color: inkC, font:{ family:"'IBM Plex Sans', sans-serif", size:11 } }, grid:{ display:false } }
+      }
+    },
+    plugins: [{
+      id: 'thresholdLines',
+      afterDraw(chart){
+        const {ctx, chartArea, scales} = chart;
+        [[75,watchC],[90,safeC]].forEach(([val,color])=>{
+          const x = scales.x.getPixelForValue(val);
+          ctx.save();
+          ctx.strokeStyle = color; ctx.setLineDash([3,3]); ctx.lineWidth = 1.2;
+          ctx.beginPath(); ctx.moveTo(x, chartArea.top); ctx.lineTo(x, chartArea.bottom); ctx.stroke();
+          ctx.restore();
+        });
+      }
+    }]
+  });
+
+  // Donut: how many subjects are safe / watch / danger
+  const donutCtx = document.getElementById('donutChart').getContext('2d');
+  if (donutChartInst) donutChartInst.destroy();
+  donutChartInst = new Chart(donutCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Safe (≥90%)','Watch (75–90%)','Detention risk (<75%)'],
+      datasets: [{ data:[safeN, watchN, atRisk], backgroundColor:[safeC, watchC, dangerC], borderWidth:0 }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false, cutout:'68%',
+      plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: c => c.label+': '+c.parsed+' subject'+(c.parsed!==1?'s':'') } } }
+    }
+  });
+
+  document.getElementById('donutLegend').innerHTML = [
+    ['Safe (≥90%)', safeC, safeN],
+    ['Watch zone (75–90%)', watchC, watchN],
+    ['Detention risk (<75%)', dangerC, atRisk]
+  ].map(([lbl,c,n]) => `<div><span class="dot" style="background:${c}"></span>${lbl} — <b>${n}</b></div>`).join('');
+}
+
+function updateField(sectionKey, idx, field, value){
+  const n = Math.max(0, parseInt(value,10) || 0);
+  store[sectionKey] = store[sectionKey] || {};
+  store[sectionKey][idx] = store[sectionKey][idx] || {};
+  store[sectionKey][idx][field] = n;
+  if (field==='held') {
+    const att = store[sectionKey][idx].attended;
+    if (att !== undefined && att > n) store[sectionKey][idx].attended = n;
+  }
+  saveStore();
+  render(sel.value);
+}
+
+let currentSection = '';
+try { currentSection = localStorage.getItem(STORE_KEY+'_last') || ''; } catch(e){}
+sel.value = currentSection;
+sel.addEventListener('change', () => {
+  try { localStorage.setItem(STORE_KEY+'_last', sel.value); } catch(e){}
+  render(sel.value);
+});
+render(sel.value);
+
+/* ---- Attendance advisor chatbot ---- */
+let sampleFn = null;
+if (window.claude && window.claude.use) {
+  window.claude.use('sample').then(s => { sampleFn = s; }).catch(() => { sampleFn = null; });
+}
+
+let chatTurns = [];
+let chatOpened = false;
+
+function buildDashboardContext(){
+  const sectionKey = sel.value;
+  if (!sectionKey) return null;
+  const section = SECTIONS[sectionKey];
+  const secStore = store[sectionKey] || {};
+  const subs = section.subs.map((s,i) => {
+    const [name, ppw] = s;
+    const heldEst = estHeld(ppw), totalEst = estTotal(ppw);
+    const remaining = Math.max(0, totalEst - heldEst);
+    const saved = secStore[i] || {};
+    const held = saved.held !== undefined ? saved.held : heldEst;
+    const attended = saved.attended !== undefined ? saved.attended : heldEst;
+    const currentPct = held>0 ? attended/held*100 : 100;
+    const denom = held + remaining;
+    const maxN = Math.min(10, remaining);
+    const ifSick = [], ifOD = [];
+    for (let n=0; n<=maxN; n++){
+      ifSick.push(denom>0 ? Math.round((attended + Math.max(0,remaining-n))/denom*1000)/10 : 100);
+      ifOD.push(denom>0 ? Math.round((attended + remaining)/denom*1000)/10 : 100);
+    }
+    return {subject:name, currentPct:Math.round(currentPct*10)/10, classesRemainingThisSemester:remaining,
+      ifSickLeaveDaysFromTomorrow_finalPct:ifSick, ifOnDutyDaysFromTomorrow_finalPct:ifOD};
+  });
+  return {section:section.label, today:fmt(today), semesterEnds:fmt(SEM_END), subjects:subs};
+}
+
+function buildRulesTurn(ctx){
+  return `You are the Attendance Advisor built into a student attendance dashboard called Margin. Below is the student's real, already-computed data for their section — treat every number as exact, never recompute a percentage from scratch yourself:
+
+${JSON.stringify(ctx)}
+
+Field guide: "ifSickLeaveDaysFromTomorrow_finalPct" is an array where index n = the subject's final semester attendance % if the student takes n more consecutive sick/personal leave days from tomorrow (counted absent) and attends every other remaining class. "ifOnDutyDaysFromTomorrow_finalPct" is the same for On-Duty (OD) days, which always count as present, so it stays roughly constant. Detention cutoff is 75%; the safe zone is 90%.
+
+When the student asks something, find the subject they mean (best name match), read the right value for the number of days mentioned (default to "sick/medical leave" unless they say "OD" or "on duty"), and answer directly: give the resulting percentage, state clearly whether it stays at/above 75% and 90%, and add one short line of practical advice or a warning if it's risky. If the subject or day count is ambiguous, ask one brief clarifying question instead of guessing. Keep the whole reply to 3-5 sentences, warm and plain, no headers or bullet lists, and never invent a number that isn't derivable from the data above.`;
+}
+
+function appendMsg(who, txt){
+  const body = document.getElementById('chatBody');
+  const el = document.createElement('div');
+  el.className = 'chat-msg ' + who;
+  el.textContent = txt;
+  body.appendChild(el);
+  body.scrollTop = body.scrollHeight;
+  return el;
+}
+
+async function sendChat(){
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  const ctx = buildDashboardContext();
+  if (!ctx) { appendMsg('bot', "Pick your class section above first — I read your dashboard live, so I need it loaded."); return; }
+
+  appendMsg('user', text);
+  input.value = '';
+  const sendBtn = document.getElementById('chatSend');
+  input.disabled = true; sendBtn.disabled = true;
+  const bubble = appendMsg('bot', 'Thinking…');
+
+  if (!sampleFn) {
+    bubble.textContent = "The AI advisor isn't available in this view. Open this page as a Claude artifact to use it.";
+    input.disabled = false; sendBtn.disabled = false; return;
+  }
+  try {
+    const turns = [{role:'user', content: buildRulesTurn(ctx)}, ...chatTurns, {role:'user', content: text}];
+    const res = await sampleFn(turns, { cache:false, onText: ({text:t}) => { bubble.textContent = t; document.getElementById('chatBody').scrollTop = 1e9; } });
+    bubble.textContent = res.text;
+    chatTurns.push({role:'user', content:text}, {role:'assistant', content:res.text});
+  } catch(e) {
+    bubble.textContent = e && e.code === 'not_granted'
+      ? "I need permission to think this through — ask again and allow it when prompted."
+      : "Couldn't work that out just now — try again in a moment.";
+  } finally {
+    input.disabled = false; sendBtn.disabled = false; input.focus();
+  }
+}
+
+document.getElementById('chatFab').addEventListener('click', () => {
+  const panel = document.getElementById('chatPanel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open') && !chatOpened) {
+    chatOpened = true;
+    appendMsg('bot', "Hi — pick a section if you haven't, then ask me things like \"if I take 3 sick days starting tomorrow, will my Chemistry drop below 75%?\" I'll read your live numbers and do the math.");
+  }
+});
+document.getElementById('chatClose').addEventListener('click', () => document.getElementById('chatPanel').classList.remove('open'));
+document.getElementById('chatSend').addEventListener('click', sendChat);
+document.getElementById('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
+</script>
+</body>
+</html>
